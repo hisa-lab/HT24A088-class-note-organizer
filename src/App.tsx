@@ -27,6 +27,10 @@ function App() {
     id: Date.now(),
     title,
     content,
+    category: "",
+    subject: "",
+    lectureNo: 1,
+    important: false,
     files: [],
   };
 
@@ -54,6 +58,16 @@ const updateNote = async (
   setSelectedNote(updatedNote);
 };
 
+const deleteNote = async (
+  id: number
+): Promise<void> => {
+  await db.notes.delete(id);
+
+  setNotes((prevNotes) =>
+    prevNotes.filter((note) => note.id !== id)
+  );
+};
+
   return (
     <div className="app">
       <Sidebar addNote={addNote} />
@@ -68,6 +82,7 @@ const updateNote = async (
         <Dashboard
           notes={notes}
           selectNote={setSelectedNote}
+          deleteNote={deleteNote}
         />
       )}
     </div>

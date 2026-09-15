@@ -41,9 +41,12 @@ body {
 
 .note-card {
   background: white;
-  padding: 15px;
+  padding: 16px;
   margin-bottom: 15px;
   border-radius: 10px;
+}
+
+.note-content {
   cursor: pointer;
 }
 
@@ -51,4 +54,139 @@ body {
 .editor textarea {
   width: 100%;
   margin-bottom: 15px;
+}
+
+.delete-button {
+  margin-top: 10px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  background-color: #e53935;
+  color: white;
+  cursor: pointer;
+}
+
+.delete-button:hover {
+  background-color: #c62828;
+}
+
+.search-input {
+  width: 100%;
+  max-width: 500px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+/* ノート編集：カテゴリー・授業名 */
+.editor-row {
+  display: flex;
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.editor-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editor-field label {
+  font-weight: 600;
+}
+
+.editor-field input,
+.editor-field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 15px;
+  box-sizing: border-box;
+  background: white;
+}
+
+/* 重要な資料 */
+.important-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  margin-top: 25px;
+  padding: 15px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+
+  background: white;
+  cursor: pointer;
+}
+
+.important-box input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.important-box strong {
+  display: block;
+  font-size: 15px;
+}
+
+.important-box p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* 保存ボタン */
+.save-button {
+  display: block;
+  margin: 20px 0 0 auto;
+  padding: 10px 28px;
+
+  border: none;
+  border-radius: 8px;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+/* 画面が狭い場合は縦並び */
+@media (max-width: 700px) {
+  .editor-row {
+    flex-direction: column;
+  }
+}
+
+/* 重要な資料にチェックしたとき */
+.important-box-checked {
+  background-color: #fff7d6;
+  border-color: #f2c94c;
+}
+
+/* 重要なノート */
+.note-card.important-note {
+  background-color: #fff8dc;
+  border: 1px solid #f0c94d;
+}
+
+/* 重要マーク */
+.important-badge {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 4px 9px;
+
+  background-color: #f0c94d;
+  border-radius: 6px;
+
+  font-size: 13px;
+  font-weight: bold;
 }
