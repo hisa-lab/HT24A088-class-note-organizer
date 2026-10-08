@@ -1,53 +1,86 @@
-import { useState } from "react";
+import type { Note } from "../types/Note";
 
 type Props = {
-  addNote: (
-    title: string,
-    content: string
-  ) => Promise<void>;
+  notes: Note[];
+  selectNote: (note: Note) => void;
+  addNote: () => Promise<void>;
+  selectedNote: Note | null;
+  goHome: () => void;
 };
 
 export default function Sidebar({
+  notes,
+  selectNote,
   addNote,
+  selectedNote,
+  goHome,
 }: Props) {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-
-  const createNote = async () => {
-    if (!title.trim()) return;
-  
-    await addNote(title, content);
-  
-    setTitle("");
-    setContent("");
-  };
+  const sortedNotes = [...notes].sort(
+    (a, b) =>
+      (b.createdAt ?? b.id) -
+      (a.createdAt ?? a.id)
+  );
 
   return (
     <aside className="sidebar">
-      <h2>Note Organizer</h2>
+      <div
+        className="sidebar-logo"
+        onClick={goHome}
+      >
+        <h2>Note Organizer</h2>
 
-      <h3>ファイル作成</h3>
+        <p>
+          授業資料をシンプルに整理
+        </p>
+      </div>
 
-      <input
-        type="text"
-        placeholder="タイトル"
-        value={title}
-        onChange={(e) =>
-          setTitle(e.target.value)
-        }
-      />
-
-      <textarea
-        placeholder="内容"
-        value={content}
-        onChange={(e) =>
-          setContent(e.target.value)
-        }
-      />
-
-      <button onClick={createNote}>
-        作成
+      <button
+        type="button"
+        className="sidebar-create-button"
+        onClick={() => void addNote()}
+      >
+        ＋ 新しいノート
       </button>
+
+      <div className="sidebar-notes">
+        <div className="sidebar-section-title">
+          ノート
+        </div>
+
+        {sortedNotes.length === 0 ? (
+          <p className="sidebar-empty">
+            ノートはありません
+          </p>
+        ) : (
+          <div className="sidebar-note-list">
+            {sortedNotes.map((note) => (
+              <button
+                key={note.id}
+                type="button"
+                className={`sidebar-note ${
+                  selectedNote?.id === note.id
+                    ? "selected"
+                    : ""
+                }`}
+                onClick={() =>
+                  selectNote(note)
+                }
+                title={note.title}
+              >
+                {note.important && (
+                  <span className="sidebar-star">
+                    ★
+                  </span>
+                )}
+
+                <span className="sidebar-note-title">
+                  {note.title}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </aside>
   );
 }
