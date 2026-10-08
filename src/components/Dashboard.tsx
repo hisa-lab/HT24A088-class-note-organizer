@@ -4,178 +4,283 @@ import type { Note } from "../types/Note";
 type Props = {
   notes: Note[];
   selectNote: (note: Note) => void;
+  addNote: () => Promise<void>;
   deleteNote: (id: number) => Promise<void>;
 };
 
 export default function Dashboard({
   notes,
   selectNote,
+  addNote,
   deleteNote,
 }: Props) {
-  // 検索欄に入力された文字
   const [searchText, setSearchText] =
     useState("");
 
-  // 検索処理
-  const filteredNotes = notes.filter((note) => {
-    const keyword =
-      searchText.toLowerCase().trim();
+  const keyword =
+    searchText.toLowerCase().trim();
 
-    // 何も入力されていない場合は全部表示
-    if (keyword === "") {
-      return true;
-    }
+  const filteredNotes = notes.filter(
+    (note) => {
+      if (keyword === "") {
+        return true;
+      }
 
-    const titleMatch =
-      note.title
-        .toLowerCase()
-        .includes(keyword);
-
-    const contentMatch =
-      note.content
-        .toLowerCase()
-        .includes(keyword);
-
-    const subjectMatch =
-      (note.subject ?? "")
-        .toLowerCase()
-        .includes(keyword);
-
-    const categoryMatch =
-      (note.category ?? "")
-        .toLowerCase()
-        .includes(keyword);
-
-    const fileMatch =
-      (note.files ?? []).some((file) =>
-        file.name
+      const titleMatch =
+        note.title
           .toLowerCase()
-          .includes(keyword)
+          .includes(keyword);
+
+      const contentMatch =
+        note.content
+          .toLowerCase()
+          .includes(keyword);
+
+      const subjectMatch =
+        (note.subject ?? "")
+          .toLowerCase()
+          .includes(keyword);
+
+      const fileMatch =
+        (note.files ?? []).some((file) =>
+          file.name
+            .toLowerCase()
+            .includes(keyword)
+        );
+
+      return (
+        titleMatch ||
+        contentMatch ||
+        subjectMatch ||
+        fileMatch
       );
-
-    return (
-      titleMatch ||
-      contentMatch ||
-      subjectMatch ||
-      categoryMatch ||
-      fileMatch
-    );
-  });
-
-  // 重要な資料を一番上に表示
-  const sortedNotes = [...filteredNotes].sort(
-    (a, b) =>
-      Number(b.important) -
-      Number(a.important)
+    }
   );
 
+  const importantNotes =
+    filteredNotes.filter(
+      (note) => note.important
+    );
+
+  const recentNotes = [...filteredNotes]
+    .sort(
+      (a, b) =>
+        (b.createdAt ?? b.id) -
+        (a.createdAt ?? a.id)
+    )
+    .slice(0, 6);
+
+  const handleDelete = (
+    note: Note
+  ) => {
+    const result = window.confirm(
+      `「${note.title}」を削除しますか？`
+    );
+
+    if (result) {
+      void deleteNote(note.id);
+    }
+  };
+
   return (
-    <main className="dashboard">
-      <h1>ダッシュボード</h1>
+    <main className="home">
 
-      {/* 検索 */}
-      <input
-        type="text"
-        placeholder="ノート・資料を検索"
-        value={searchText}
-        onChange={(e) =>
-          setSearchText(e.target.value)
-        }
-        className="search-input"
-      />
+      {/* 上部 */}
+      <div className="home-header">
+        <div>
+          <p className="home-label">
+            Note Organizer
+          </p>
 
-      {/* ファイル数 */}
-      <div className="stats">
-        <div className="card">
-          <h2>{notes.length}</h2>
-          <p>ファイル数</p>
+          <h1>ホーム</h1>
+
+          <p className="home-description">
+            ノートや授業資料をまとめて確認できます。
+          </p>
         </div>
+
+        <button
+          type="button"
+          className="new-note-button"
+          onClick={() => void addNote()}
+        >
+          ＋ 新しいノート
+        </button>
       </div>
 
-      <h2>作成したノート</h2>
 
-      {/* 検索結果がない場合 */}
-      {sortedNotes.length === 0 && (
-        <p>検索結果がありません。</p>
-      )}
+      {/* 検索 */}
+      <div className="home-search">
+        <span>⌕</span>
 
-      {/* ノート一覧 */}
-      {sortedNotes.map((note) => (
-        <div
-          key={note.id}
-          className={`note-card ${
-            note.important
-              ? "important-note"
-              : ""
-          }`}
-        >
-          <div
-            className="note-content"
-            onClick={() =>
-              selectNote(note)
-            }
-          >
-            {/* 重要資料 */}
-            {note.important && (
-              <span className="important-badge">
-                ★ 重要
-              </span>
-            )}
+        <input
+          type="text"
+          placeholder="ノート・資料を検索"
+          value={searchText}
+          onChange={(e) =>
+            setSearchText(e.target.value)
+          }
+        />
+      </div>
 
-            {/* タイトル */}
-            <h3>{note.title}</h3>
 
-            {/* カテゴリー */}
-            {note.category && (
-              <p>
-                カテゴリー：
-                {note.category}
-              </p>
-            )}
+      {/* 重要な資料 */}
+      {importantNotes.length > 0 && (
+        <section className="home-section">
 
-            {/* 授業・分野 */}
-            {note.subject && (
-              <p>
-                授業・分野：
-                {note.subject}
-              </p>
-            )}
-
-            {/* 講義回 */}
-            <p>
-              講義回：第
-              {note.lectureNo ?? 1}回
-            </p>
-
-            {/* 本文 */}
-            <p>{note.content}</p>
-
-            {/* 添付資料 */}
-            <small>
-              添付資料：
-              {note.files?.length ?? 0}件
-            </small>
+          <div className="section-title">
+            <h2>重要な資料</h2>
           </div>
 
-          {/* 削除 */}
-          <button
-            type="button"
-            className="delete-button"
-            onClick={() => {
-              const result =
-                window.confirm(
-                  `「${note.title}」を削除しますか？`
-                );
+          <div className="document-list">
 
-              if (result) {
-                void deleteNote(note.id);
-              }
-            }}
-          >
-            削除
-          </button>
+            {importantNotes.map((note) => (
+              <button
+                key={note.id}
+                type="button"
+                className="document-row important-row"
+                onClick={() =>
+                  selectNote(note)
+                }
+              >
+                <div className="document-main">
+
+                  <span className="important-mark">
+                    ★
+                  </span>
+
+                  <div>
+                    <strong>
+                      {note.title}
+                    </strong>
+
+                    <p>
+                      {note.subject
+                        ? `${note.subject} ・ `
+                        : ""}
+
+                      第{note.lectureNo}回
+                    </p>
+                  </div>
+
+                </div>
+
+              </button>
+            ))}
+
+          </div>
+        </section>
+      )}
+
+
+      {/* 最近のノート */}
+      <section className="home-section">
+
+        <div className="section-title">
+
+          <h2>
+            {searchText
+              ? "検索結果"
+              : "最近のノート"}
+          </h2>
+
+          <span className="note-count">
+            {filteredNotes.length}件
+          </span>
+
         </div>
-      ))}
+
+
+        {recentNotes.length === 0 ? (
+
+          <div className="empty-card">
+
+            <p>
+              {searchText
+                ? "該当するノートがありません。"
+                : "まだノートがありません。"}
+            </p>
+
+            {!searchText && (
+              <button
+                type="button"
+                onClick={() =>
+                  void addNote()
+                }
+              >
+                最初のノートを作成
+              </button>
+            )}
+
+          </div>
+
+        ) : (
+
+          <div className="document-list">
+
+            {recentNotes.map((note) => (
+
+              <div
+                key={note.id}
+                className="document-row"
+              >
+
+                {/* ノートを開く部分 */}
+                <button
+                  type="button"
+                  className="document-open"
+                  onClick={() =>
+                    selectNote(note)
+                  }
+                >
+
+                  <div>
+                    <strong>
+                      {note.title}
+                    </strong>
+
+                    <p>
+                      {note.subject
+                        ? `${note.subject} ・ `
+                        : ""}
+
+                      第{note.lectureNo}回
+
+                      {" ・ "}
+
+                      添付
+                      {note.files?.length ?? 0}件
+                    </p>
+                  </div>
+
+                </button>
+
+
+                {/* 右側の操作 */}
+                <div className="document-actions">
+
+                  <button
+                    type="button"
+                    className="note-delete-button"
+                    onClick={() =>
+                      handleDelete(note)
+                    }
+                  >
+                    削除
+                  </button>
+
+                </div>
+
+              </div>
+
+            ))}
+
+          </div>
+
+        )}
+
+      </section>
+
     </main>
   );
 }
