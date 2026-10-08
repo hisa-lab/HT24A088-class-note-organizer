@@ -15,9 +15,6 @@ export default function NoteEditor({
   const [title, setTitle] =
     useState(note.title);
 
-  const [category, setCategory] =
-    useState(note.category ?? "");
-
   const [subject, setSubject] =
     useState(note.subject ?? "");
 
@@ -56,11 +53,27 @@ export default function NoteEditor({
     event.target.value = "";
   };
 
+  const openFile = (
+    file: (typeof files)[number]
+  ) => {
+    const fileUrl =
+      URL.createObjectURL(file.data);
+
+    window.open(
+      fileUrl,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+    window.setTimeout(() => {
+      URL.revokeObjectURL(fileUrl);
+    }, 60000);
+  };
+
   const save = async () => {
     await updateNote({
       ...note,
       title,
-      category,
       subject,
       lectureNo,
       content,
@@ -73,154 +86,176 @@ export default function NoteEditor({
 
   return (
     <main className="editor">
-      <h1>ノート編集</h1>
-
-      <label>タイトル</label>
-
-      <input
-        type="text"
-        value={title}
-        onChange={(e) =>
-          setTitle(e.target.value)
-        }
-      />
-
-<div className="editor-row">
-  <div className="editor-field">
-    <label>カテゴリー</label>
-
-    <select
-      value={category}
-      onChange={(e) =>
-        setCategory(e.target.value)
-      }
-    >
-      <option value="">
-        カテゴリーを選択
-      </option>
-      <option value="数学・理系">数学・理系</option>
-      <option value="言語">言語</option>
-      <option value="社会・人文">社会・人文</option>
-      <option value="情報・IT">情報・IT</option>
-      <option value="資格・試験">資格・試験</option>
-      <option value="研修・仕事">研修・仕事</option>
-      <option value="その他">その他</option>
-    </select>
-  </div>
-
-  <div className="editor-field">
-    <label>授業・分野名</label>
-
-    <input
-      type="text"
-      value={subject}
-      placeholder="例：数学、データベース、新人研修"
-      onChange={(e) =>
-        setSubject(e.target.value)
-      }
-    />
-  </div>
-</div>
-
-      <label>講義回</label>
-
-      <select
-        value={lectureNo}
-        onChange={(e) =>
-          setLectureNo(Number(e.target.value))
-        }
-      >
-        {Array.from(
-          { length: 15 },
-          (_, index) => index + 1
-        ).map((number) => (
-          <option
-            key={number}
-            value={number}
+      <div className="editor-header">
+        <div>
+          <button
+            type="button"
+            className="back-button"
+            onClick={goBack}
           >
-            第{number}回
-          </option>
-        ))}
-      </select>
+            ← ホームに戻る
+          </button>
 
-      <label>本文</label>
+          <h1>ノート編集</h1>
+        </div>
 
-      <textarea
-        value={content}
-        onChange={(e) =>
-          setContent(e.target.value)
-        }
-      />
+        <button
+          type="button"
+          className="save-button"
+          onClick={() => void save()}
+        >
+          保存
+        </button>
+      </div>
 
-      <h3>授業資料</h3>
+      <div className="editor-form">
+        <div className="editor-field">
+          <label>タイトル</label>
 
-      <input
-        type="file"
-        multiple
-        accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png"
-        onChange={handleFileUpload}
-      />
+          <input
+            type="text"
+            value={title}
+            placeholder="ノートのタイトル"
+            onChange={(e) =>
+              setTitle(e.target.value)
+            }
+          />
+        </div>
 
-      <h3>アップロード済み資料</h3>
+        <div className="editor-row">
+          <div className="editor-field">
+            <label>授業・分野名</label>
 
-      <ul>
-        {files.map((file, index) => (
-          <li key={`${file.name}-${index}`}>
-            <button
-              type="button"
-              onClick={() => {
-                const fileUrl =
-                  URL.createObjectURL(
-                    file.data
-                  );
+            <input
+              type="text"
+              value={subject}
+              placeholder="例：数学、データベース"
+              onChange={(e) =>
+                setSubject(e.target.value)
+              }
+            />
+          </div>
 
-                window.open(
-                  fileUrl,
-                  "_blank",
-                  "noopener,noreferrer"
-                );
+          <div className="editor-field lecture-field">
+            <label>講義回</label>
 
-                window.setTimeout(() => {
-                  URL.revokeObjectURL(
-                    fileUrl
-                  );
-                }, 60000);
-              }}
+            <select
+              value={lectureNo}
+              onChange={(e) =>
+                setLectureNo(
+                  Number(e.target.value)
+                )
+              }
             >
-              {file.name}
-            </button>
-          </li>
-        ))}
-      </ul>
+              {Array.from(
+                { length: 15 },
+                (_, index) => index + 1
+              ).map((number) => (
+                <option
+                  key={number}
+                  value={number}
+                >
+                  第{number}回
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-      <label
-  className={`important-box ${
-    important ? "important-box-checked" : ""
-  }`}
->
-  <input
-    type="checkbox"
-    checked={important}
-    onChange={(e) =>
-      setImportant(e.target.checked)
-    }
-  />
+        <div className="editor-field">
+          <label>本文</label>
 
-  <div>
-    <strong>重要な資料</strong>
-    <p>
-      復習や試験前に確認したい資料として登録します
-    </p>
-  </div>
-</label>
+          <textarea
+            value={content}
+            placeholder="授業内容やメモを入力"
+            onChange={(e) =>
+              setContent(e.target.value)
+            }
+          />
+        </div>
 
-<button
-  type="button"
-  className="save-button"
-  onClick={save}
->
-  保存
-</button>
+        <div className="material-section">
+          <div className="material-header">
+            <div>
+              <h2>授業資料</h2>
+
+              <p>
+                PDFや画像などをノートと一緒に保存できます。
+              </p>
+            </div>
+
+            <label className="upload-button">
+              ＋ 資料を追加
+
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png"
+                onChange={handleFileUpload}
+              />
+            </label>
+          </div>
+
+          {files.length === 0 ? (
+            <div className="empty-files">
+              まだ資料はありません。
+            </div>
+          ) : (
+            <div className="file-list">
+              {files.map((file, index) => (
+                <button
+                  key={`${file.name}-${index}`}
+                  type="button"
+                  className="file-item"
+                  onClick={() =>
+                    openFile(file)
+                  }
+                >
+                  <div>
+                    <strong>
+                      {file.name}
+                    </strong>
+
+                    <p>
+                      クリックして資料を開く
+                    </p>
+                  </div>
+
+                  <span>→</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <label
+          className={`important-box ${
+            important
+              ? "important-box-checked"
+              : ""
+          }`}
+        >
+          <input
+            type="checkbox"
+            checked={important}
+            onChange={(e) =>
+              setImportant(
+                e.target.checked
+              )
+            }
+          />
+
+          <div>
+            <strong>
+              重要な資料
+            </strong>
+
+            <p>
+              復習や試験前に確認したい資料として登録します。
+            </p>
+          </div>
+        </label>
+      </div>
     </main>
   );
 }
