@@ -1,76 +1,94 @@
 import { useEffect, useState } from "react";
 import { db } from "./db/db";
+
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
 import NoteEditor from "./components/NoteEditor";
+
 import type { Note } from "./types/Note";
 
 function App() {
   const [notes, setNotes] = useState<Note[]>([]);
+
   const [selectedNote, setSelectedNote] =
     useState<Note | null>(null);
 
-    useEffect(() => {
-      const loadNotes = async () => {
-        const savedNotes = await db.notes.toArray();
-        setNotes(savedNotes);
-      };
-    
-      void loadNotes();
-    }, []);
+  useEffect(() => {
+    const loadNotes = async () => {
+      const savedNotes = await db.notes.toArray();
 
-  const addNote = async (
-  title: string,
-  content: string
-) => {
-  const newNote: Note = {
-    id: Date.now(),
-    title,
-    content,
-    category: "",
-    subject: "",
-    lectureNo: 1,
-    important: false,
-    files: [],
+      setNotes(savedNotes);
+    };
+
+    void loadNotes();
+  }, []);
+
+  const addNote = async () => {
+    const now = Date.now();
+
+    const newNote: Note = {
+      id: now,
+      title: "新しいノート",
+      content: "",
+      subject: "",
+      lectureNo: 1,
+      important: false,
+      files: [],
+      createdAt: now,
+    };
+
+    await db.notes.add(newNote);
+
+    setNotes((currentNotes) => [
+      ...currentNotes,
+      newNote,
+    ]);
+
+    // 作成したノートをすぐ編集
+    setSelectedNote(newNote);
   };
 
-  await db.notes.add(newNote);
+  const updateNote = async (
+    updatedNote: Note
+  ): Promise<void> => {
+    await db.notes.put(updatedNote);
 
-  setNotes((currentNotes) => [
-    ...currentNotes,
-    newNote,
-  ]);
-};
+    setNotes((currentNotes) =>
+      currentNotes.map((note) =>
+        note.id === updatedNote.id
+          ? updatedNote
+          : note
+      )
+    );
 
-const updateNote = async (
-  updatedNote: Note
-): Promise<void> => {
-  await db.notes.put(updatedNote);
+    setSelectedNote(updatedNote);
+  };
 
-  setNotes((currentNotes) =>
-    currentNotes.map((note) =>
-      note.id === updatedNote.id
-        ? updatedNote
-        : note
-    )
-  );
-
-  setSelectedNote(updatedNote);
-};
-
-const deleteNote = async (
-  id: number
-): Promise<void> => {
-  await db.notes.delete(id);
-
-  setNotes((prevNotes) =>
-    prevNotes.filter((note) => note.id !== id)
-  );
-};
+  const deleteNote = async (
+    id: number
+  ): Promise<void> => {
+    await db.notes.delete(id);
+  
+    setNotes((currentNotes) =>
+      currentNotes.filter(
+        (note) => note.id !== id
+      )
+    );
+  
+    if (selectedNote?.id === id) {
+      setSelectedNote(null);
+    }
+  };
 
   return (
     <div className="app">
-      <Sidebar addNote={addNote} />
+      <Sidebar
+        notes={notes}
+        selectNote={setSelectedNote}
+        addNote={addNote}
+        selectedNote={selectedNote}
+        goHome={() => setSelectedNote(null)}
+      />
 
       {selectedNote ? (
         <NoteEditor
@@ -82,6 +100,7 @@ const deleteNote = async (
         <Dashboard
           notes={notes}
           selectNote={setSelectedNote}
+          addNote={addNote}
           deleteNote={deleteNote}
         />
       )}
