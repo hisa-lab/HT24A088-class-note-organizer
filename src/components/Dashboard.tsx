@@ -14,61 +14,71 @@ export default function Dashboard({
   addNote,
   deleteNote,
 }: Props) {
-  const [searchText, setSearchText] =
-    useState("");
+  const [searchText, setSearchText] = useState("");
+  const [searchYear, setSearchYear] = useState("");
+  const [searchMonth, setSearchMonth] = useState("");
+  const [searchDay, setSearchDay] = useState("");
 
-  const keyword =
-    searchText.toLowerCase().trim();
+  const keyword = searchText.toLowerCase().trim();
 
-  const filteredNotes = notes.filter(
-    (note) => {
-      if (keyword === "") {
-        return true;
-      }
-
-      const titleMatch =
-        note.title
-          .toLowerCase()
-          .includes(keyword);
-
-      const contentMatch =
-        note.content
-          .toLowerCase()
-          .includes(keyword);
-
-      const subjectMatch =
-        (note.subject ?? "")
-          .toLowerCase()
-          .includes(keyword);
-
-      const fileMatch =
-        (note.files ?? []).some((file) =>
-          file.name
-            .toLowerCase()
-            .includes(keyword)
-        );
-
-      return (
+    const filteredNotes = notes.filter((note) => {
+      // キーワード検索
+      const titleMatch = note.title
+        .toLowerCase()
+        .includes(keyword);
+    
+      const contentMatch = note.content
+        .toLowerCase()
+        .includes(keyword);
+    
+      const subjectMatch = (note.subject ?? "")
+        .toLowerCase()
+        .includes(keyword);
+    
+      const fileMatch = (note.files ?? []).some((file) =>
+        file.name.toLowerCase().includes(keyword)
+      );
+    
+      const keywordMatch =
+        keyword === "" ||
         titleMatch ||
         contentMatch ||
         subjectMatch ||
-        fileMatch
-      );
-    }
-  );
+        fileMatch;
+    
+      // 作成日検索
+      const createdAt = note.createdAt ?? note.id;
+      const date = new Date(createdAt);
+    
+      const dateMatch =
+        (searchYear === "" ||
+          String(date.getFullYear()) === searchYear) &&
+        (searchMonth === "" ||
+          date.getMonth() + 1 === Number(searchMonth)) &&
+        (searchDay === "" ||
+          date.getDate() === Number(searchDay));
+    
+      return keywordMatch && dateMatch;
+    });
 
   const importantNotes =
     filteredNotes.filter(
       (note) => note.important
     );
 
+    const hasSearch =
+    searchText.trim() !== "" ||
+    searchYear !== "" ||
+    searchMonth !== "" ||
+    searchDay !== "";
+  
   const recentNotes = [...filteredNotes]
     .sort(
       (a, b) =>
         (b.createdAt ?? b.id) -
         (a.createdAt ?? a.id)
     )
-    .slice(0, 6);
+    .slice(0, hasSearch ? undefined : 6);
 
   const handleDelete = (
     note: Note
@@ -123,6 +133,61 @@ export default function Dashboard({
         />
       </div>
 
+      {/* 作成日検索 */}
+<div className="date-search">
+  <label>作成日で検索</label>
+
+  <div className="date-input-group">
+    <input
+      type="text"
+      inputMode="numeric"
+      placeholder="YYYY"
+      maxLength={4}
+      value={searchYear}
+      onChange={(e) =>
+        setSearchYear(e.target.value.replace(/\D/g, ""))
+      }
+    />
+
+    <span>/</span>
+
+    <input
+      type="text"
+      inputMode="numeric"
+      placeholder="MM"
+      maxLength={2}
+      value={searchMonth}
+      onChange={(e) =>
+        setSearchMonth(e.target.value.replace(/\D/g, ""))
+      }
+    />
+
+    <span>/</span>
+
+    <input
+      type="text"
+      inputMode="numeric"
+      placeholder="DD"
+      maxLength={2}
+      value={searchDay}
+      onChange={(e) =>
+        setSearchDay(e.target.value.replace(/\D/g, ""))
+      }
+    />
+
+    <button
+      type="button"
+      className="date-clear-button"
+      onClick={() => {
+        setSearchYear("");
+        setSearchMonth("");
+        setSearchDay("");
+      }}
+    >
+      クリア
+    </button>
+  </div>
+</div>
 
       {/* 重要な資料 */}
       {importantNotes.length > 0 && (
@@ -179,7 +244,7 @@ export default function Dashboard({
         <div className="section-title">
 
           <h2>
-            {searchText
+            {hasSearch
               ? "検索結果"
               : "最近のノート"}
           </h2>
@@ -250,6 +315,12 @@ export default function Dashboard({
 
                       添付
                       {note.files?.length ?? 0}件
+                      
+                      {" ・ "}
+                      作成日：
+                      {new Date(
+                        note.createdAt ?? note.id
+                      ).toLocaleDateString("ja-JP")}
                     </p>
                   </div>
 

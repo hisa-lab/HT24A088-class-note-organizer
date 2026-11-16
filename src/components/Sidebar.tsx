@@ -1,3 +1,4 @@
+
 import type { Note } from "../types/Note";
 
 type Props = {
@@ -6,6 +7,7 @@ type Props = {
   addNote: () => Promise<void>;
   selectedNote: Note | null;
   goHome: () => void;
+  goLectures: () => void; // 追加
 };
 
 export default function Sidebar({
@@ -14,6 +16,7 @@ export default function Sidebar({
   addNote,
   selectedNote,
   goHome,
+  goLectures, // 追加
 }: Props) {
   const sortedNotes = [...notes].sort(
     (a, b) =>
@@ -40,6 +43,15 @@ export default function Sidebar({
         onClick={() => void addNote()}
       >
         ＋ 新しいノート
+      </button>
+
+      {/* 追加：講義ごとの資料管理 */}
+      <button
+        type="button"
+        className="sidebar-lecture-button"
+        onClick={goLectures}
+      >
+        📚 講義ごとの資料管理
       </button>
 
       <div className="sidebar-notes">

@@ -1,11 +1,15 @@
+
 import { useEffect, useState } from "react";
 import { db } from "./db/db";
 
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
 import NoteEditor from "./components/NoteEditor";
+import LectureManager from "./components/LectureManager";
 
 import type { Note } from "./types/Note";
+
+type Page = "home" | "lectures";
 
 function App() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -13,10 +17,12 @@ function App() {
   const [selectedNote, setSelectedNote] =
     useState<Note | null>(null);
 
+  // 現在表示している画面
+  const [page, setPage] = useState<Page>("home");
+
   useEffect(() => {
     const loadNotes = async () => {
       const savedNotes = await db.notes.toArray();
-
       setNotes(savedNotes);
     };
 
@@ -44,7 +50,6 @@ function App() {
       newNote,
     ]);
 
-    // 作成したノートをすぐ編集
     setSelectedNote(newNote);
   };
 
@@ -68,16 +73,26 @@ function App() {
     id: number
   ): Promise<void> => {
     await db.notes.delete(id);
-  
+
     setNotes((currentNotes) =>
       currentNotes.filter(
         (note) => note.id !== id
       )
     );
-  
+
     if (selectedNote?.id === id) {
       setSelectedNote(null);
     }
+  };
+
+  const goHome = () => {
+    setSelectedNote(null);
+    setPage("home");
+  };
+
+  const goLectures = () => {
+    setSelectedNote(null);
+    setPage("lectures");
   };
 
   return (
@@ -87,14 +102,22 @@ function App() {
         selectNote={setSelectedNote}
         addNote={addNote}
         selectedNote={selectedNote}
-        goHome={() => setSelectedNote(null)}
+        goHome={goHome}
+        goLectures={goLectures}
       />
 
       {selectedNote ? (
         <NoteEditor
+          key={selectedNote.id}
           note={selectedNote}
           updateNote={updateNote}
           goBack={() => setSelectedNote(null)}
+        />
+      ) : page === "lectures" ? (
+        <LectureManager
+          notes={notes}
+          selectNote={setSelectedNote}
+          goHome={goHome}
         />
       ) : (
         <Dashboard

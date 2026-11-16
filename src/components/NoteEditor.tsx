@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Note } from "../types/Note";
+import { getLectureCount } from "../utils/subjectSetting";
 
 type Props = {
   note: Note;
@@ -21,6 +22,8 @@ export default function NoteEditor({
   const [lectureNo, setLectureNo] =
     useState(note.lectureNo ?? 1);
 
+    const [lectureCount, setLectureCount] = useState(15);
+
   const [content, setContent] =
     useState(note.content);
 
@@ -29,6 +32,24 @@ export default function NoteEditor({
 
   const [files, setFiles] =
     useState(note.files ?? []);
+
+    useEffect(() => {
+      let cancelled = false;
+    
+      getLectureCount(subject)
+        .then((count) => {
+          if (!cancelled) {
+            setLectureCount(count);
+          }
+        })
+        .catch((error) => {
+          console.error("講義回数の取得に失敗しました:", error);
+        });
+    
+      return () => {
+        cancelled = true;
+      };
+    }, [subject]);
 
   const handleFileUpload = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -68,6 +89,19 @@ export default function NoteEditor({
     window.setTimeout(() => {
       URL.revokeObjectURL(fileUrl);
     }, 60000);
+  };
+
+  // 添付資料の個別削除
+  const handleDeleteFile = (index: number) => {
+    const confirmed = window.confirm(
+      "この添付資料を削除しますか？"
+    );
+
+    if (!confirmed) return;
+
+    setFiles((currentFiles) =>
+      currentFiles.filter((_, i) => i !== index)
+    );
   };
 
   const save = async () => {
@@ -124,12 +158,12 @@ export default function NoteEditor({
 
         <div className="editor-row">
           <div className="editor-field">
-            <label>授業・分野名</label>
+            <label>授業名</label>
 
             <input
               type="text"
               value={subject}
-              placeholder="例：数学、データベース"
+              placeholder="例：データベース,プログラミング演習など"
               onChange={(e) =>
                 setSubject(e.target.value)
               }
@@ -148,16 +182,13 @@ export default function NoteEditor({
               }
             >
               {Array.from(
-                { length: 15 },
+                { length: Math.max(lectureCount, lectureNo) },
                 (_, index) => index + 1
-              ).map((number) => (
-                <option
-                  key={number}
-                  value={number}
-                >
+                ).map((number) => (
+                <option key={number} value={number}>
                   第{number}回
-                </option>
-              ))}
+                  </option>
+                  ))}
             </select>
           </div>
         </div>
@@ -203,26 +234,30 @@ export default function NoteEditor({
           ) : (
             <div className="file-list">
               {files.map((file, index) => (
-                <button
+                <div
                   key={`${file.name}-${index}`}
-                  type="button"
                   className="file-item"
-                  onClick={() =>
-                    openFile(file)
-                  }
                 >
-                  <div>
-                    <strong>
-                      {file.name}
-                    </strong>
+                  <button
+                    type="button"
+                    className="file-open-button"
+                    onClick={() => openFile(file)}
+                  >
+                    <div>
+                      <strong>{file.name}</strong>
+                      <p>クリックして資料を開く</p>
+                    </div>
+                    <span>→</span>
+                  </button>
 
-                    <p>
-                      クリックして資料を開く
-                    </p>
-                  </div>
-
-                  <span>→</span>
-                </button>
+                  <button
+                    type="button"
+                    className="note-delete-button"
+                    onClick={() => handleDeleteFile(index)}
+                  >
+                    削除
+                  </button>
+                </div>
               ))}
             </div>
           )}
